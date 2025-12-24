@@ -12,7 +12,7 @@ env:
   IMAGE_NAME: quadit
   IMAGE_TAGS: ${{ github.sha }}
   IMAGE_REGISTRY: ghcr.io
-  IMAGE_NAMESPACE: ${{ github.repository_owner }}
+  IMAGE_NAMESPACE_RAW: ${{ github.repository_owner }}
 
 jobs:
   doing-a-build:
@@ -69,6 +69,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
+      - name: set env
+        run: |
+          echo "IMAGE_NAMESPACE=${IMAGE_NAMESPACE_RAW@L}" >> "${GITHUB_ENV}"
       - name: Build Manifest
         id: manifests
         continue-on-error: true
