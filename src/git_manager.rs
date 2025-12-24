@@ -260,18 +260,22 @@ impl GitManager {
                     return false;
                 }
             };
-            let unit = match FileManager::filename_to_unit_name(config_target_path) {
-                Ok(s) => s,
-                Err(e) => {
-                    error!("{}, Failed to get unit name: {}", uuid, e);
-                    return false;
-                }
-            };
 
-            match ServiceManager::restart(&unit) {
-                Ok(s) => info!("{}, Restarted {} with exit code:{}", uuid, unit, s),
-                Err(e) => error!("{}: Failed to restart: {} {}", uuid, unit, e),
-            };
+            let is_service = FileManager::is_quadlet_file(config_target_path);
+            if is_service {
+                let unit = match FileManager::filename_to_unit_name(config_target_path) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        error!("{}, Failed to get unit name: {}", uuid, e);
+                        return false;
+                    }
+                };
+
+                match ServiceManager::restart(&unit) {
+                    Ok(s) => info!("{}, Restarted {} with exit code:{}", uuid, unit, s),
+                    Err(e) => error!("{}: Failed to restart: {} {}", uuid, unit, e),
+                };
+            }
         } else if md.is_dir() {
             info!(
                 "{}: Processing Directory {}",

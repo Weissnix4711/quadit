@@ -31,7 +31,7 @@ mod tests {
         let target_path = "test.container";
         fs::create_dir(jobdir).unwrap();
 
-        let mut unit_path = FileManager::get_unit_path();
+        let mut unit_path = FileManager::get_quadlet_path();
         if !unit_path.exists() {
             let dir = unit_path.clone();
             fs::create_dir_all(dir).unwrap_or_else(|why| {
@@ -76,7 +76,7 @@ mod tests {
 
         fs::create_dir_all(full_job_folder).unwrap();
         File::create(&file_path).unwrap();
-        let mut unit_path = FileManager::get_unit_path();
+        let mut unit_path = FileManager::get_quadlet_path();
         if !unit_path.exists() {
             let dir = unit_path.clone();
             fs::create_dir_all(dir).unwrap_or_else(|why| {

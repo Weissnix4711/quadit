@@ -15,7 +15,8 @@ use tracing::{debug, error, info};
 
 use url::Url;
 
-const SUPPORTED_FILES: [&str; 5] = ["container", "volume", "pod", "network", "kube"];
+const SUPPORTED_FILES: [&str; 6] = ["container", "volume", "pod", "network", "kube", "socket"];
+const QUADLET_FILES: [&str; 5] = ["container", "volume", "pod", "network", "kube"];
 /// Manages all the file system interactions
 pub struct FileManager {}
 
@@ -182,6 +183,18 @@ impl FileManager {
         }
     }
 
+    #[instrument(level = "trace")]
+    pub fn is_quadlet_file(target_path: &str) -> bool {
+        let path = PathBuf::from(&target_path);
+        QUADLET_FILES.contains(
+            &path
+                .extension()
+                .unwrap_or_default()
+                .to_str()
+                .unwrap_or_default(),
+        )
+    }
+
     /// Test to see if a file exists in the container deployment location
     /// Currently `~/.config/containers/systemd/` but this may be expanded in later releases.
     /// # Arguments
@@ -194,7 +207,13 @@ impl FileManager {
         definition_path.push(unit_path);
 
         let path = Path::new(unit_path);
-        let mut config_path = FileManager::get_unit_path();
+        let is_systemd_file =
+            !FileManager::is_quadlet_file(definition_path.to_str().unwrap_or_default());
+        let mut config_path = if is_systemd_file {
+            FileManager::get_systemd_path()
+        } else {
+            FileManager::get_quadlet_path()
+        };
 
         config_path.push(path.file_name().unwrap_or_default());
 
@@ -289,7 +308,13 @@ impl FileManager {
             return Err(msg);
         }
 
-        let mut unit_deploy_path = FileManager::get_unit_path();
+        let is_systemd_file =
+            !FileManager::is_quadlet_file(definition_path.to_str().unwrap_or_default());
+        let mut unit_deploy_path = if is_systemd_file {
+            FileManager::get_systemd_path()
+        } else {
+            FileManager::get_quadlet_path()
+        };
         info!("repo_unit_path: {repo_unit_path}");
         unit_deploy_path.push(repo_unit_path);
 
@@ -334,7 +359,15 @@ impl FileManager {
         })
     }
 
-    pub fn get_unit_path() -> PathBuf {
+    pub fn systemd_unit_path() -> &'static str {
+        static PODMAN_UNIT_PATH: OnceLock<String> = OnceLock::new();
+        PODMAN_UNIT_PATH.get_or_init(|| {
+            var("SYSTEMD_UNIT_PATH").unwrap_or(".local/share/systemd/user".to_string())
+            // TODO is this correct
+        })
+    }
+
+    pub fn get_quadlet_path() -> PathBuf {
         if FileManager::is_local() == "yes" {
             let mut config_path = match dirs::home_dir() {
                 Some(p) => p,
@@ -345,6 +378,21 @@ impl FileManager {
         } else {
             let mut config_path = PathBuf::new();
             config_path.push("/opt/containers");
+            config_path
+        }
+    }
+
+    pub fn get_systemd_path() -> PathBuf {
+        if FileManager::is_local() == "yes" {
+            let mut config_path = match dirs::home_dir() {
+                Some(p) => p,
+                None => PathBuf::new(),
+            };
+            config_path.push(FileManager::systemd_unit_path());
+            config_path
+        } else {
+            let mut config_path = PathBuf::new();
+            config_path.push("/opt/systemd");
             config_path
         }
     }
