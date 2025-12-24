@@ -12,7 +12,7 @@ SecurityLabelDisable=true
 Volume=quadit-volume:/opt
 Volume=%h/.quadit:/opt/config
 Volume=%h/.config/containers/systemd:/opt/containers
-Volume=%h/.local/share/systemd/user:/opt/systemd
+Volume=%h/.config/systemd/user:/opt/systemd
 Volume=/run/user/%U/podman/podman.sock:/run/podman/podman.sock
 # Need to validate if --cgroups no-conmon --cidfile "%t/%n.ctr-id" options are provided by Container
 PodmanArgs=--init-path /usr/sbin/init --pid host --privileged
@@ -26,6 +26,7 @@ Restart=always
 TimeoutStopSec=120
 ExecStartPre=/usr/bin/mkdir -p %h/.quadit
 ExecStartPre=/usr/bin/mkdir -p %h/.config/containers/systemd
+ExecStartPre=/usr/bin/mkdir -p %h/.config/systemd/user
 # Need to validate if these options are managed by Container
 # ExecStartPre=/bin/rm -f %t/%n.ctr-id
 # ExecStop=/usr/bin/podman stop --ignore --cidfile=%t/%n.ctr-id
