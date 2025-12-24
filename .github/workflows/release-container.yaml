@@ -54,6 +54,9 @@ jobs:
           build-args: REMOTE_ARCH=${{ steps.remotearch.outputs.value }}
           containerfiles: |
             ./Dockerfile
+      - name: set env
+        run: |
+          echo "IMAGE_NAMESPACE=${IMAGE_NAMESPACE_RAW@L}" >> "${GITHUB_ENV}"
       - name: Push To ghcr
         uses: redhat-actions/push-to-registry@v2
         id: push
@@ -69,9 +72,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
-      - name: set env
-        run: |
-          echo "IMAGE_NAMESPACE=${IMAGE_NAMESPACE_RAW@L}" >> "${GITHUB_ENV}"
       - name: Build Manifest
         id: manifests
         continue-on-error: true
