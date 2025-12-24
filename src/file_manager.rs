@@ -310,13 +310,19 @@ impl FileManager {
 
         let is_systemd_file =
             !FileManager::is_quadlet_file(definition_path.to_str().unwrap_or_default());
-        let mut unit_deploy_path = if is_systemd_file {
-            FileManager::get_systemd_path()
-        } else {
-            FileManager::get_quadlet_path()
-        };
+        let mut unit_deploy_path = PathBuf::new();
         info!("repo_unit_path: {repo_unit_path}");
-        unit_deploy_path.push(repo_unit_path);
+        if is_systemd_file {
+            unit_deploy_path.push(FileManager::get_systemd_path());
+            unit_deploy_path.push(
+                PathBuf::from(repo_unit_path)
+                    .file_name()
+                    .unwrap_or_default(),
+            );
+        } else {
+            unit_deploy_path.push(FileManager::get_quadlet_path());
+            unit_deploy_path.push(repo_unit_path);
+        }
 
         info!("unit_deploy_path: {:#?}", &unit_deploy_path);
         info!("definition_path: {:#?}", &definition_path);
@@ -362,7 +368,7 @@ impl FileManager {
     pub fn systemd_unit_path() -> &'static str {
         static PODMAN_UNIT_PATH: OnceLock<String> = OnceLock::new();
         PODMAN_UNIT_PATH.get_or_init(|| {
-            var("SYSTEMD_UNIT_PATH").unwrap_or(".local/share/systemd/user".to_string())
+            var("SYSTEMD_UNIT_PATH").unwrap_or(".config/systemd/user".to_string())
             // TODO is this correct
         })
     }
