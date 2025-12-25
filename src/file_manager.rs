@@ -206,16 +206,16 @@ impl FileManager {
         definition_path.push(job_path);
         definition_path.push(unit_path);
 
-        let path = Path::new(unit_path);
         let is_systemd_file =
             !FileManager::is_quadlet_file(definition_path.to_str().unwrap_or_default());
-        let mut config_path = if is_systemd_file {
-            FileManager::get_systemd_path()
+        let mut config_path = PathBuf::new();
+        if is_systemd_file {
+            config_path.push(FileManager::get_systemd_path());
+            config_path.push(PathBuf::from(unit_path).file_name().unwrap_or_default());
         } else {
-            FileManager::get_quadlet_path()
-        };
-
-        config_path.push(path.file_name().unwrap_or_default());
+            config_path.push(FileManager::get_quadlet_path());
+            config_path.push(unit_path);
+        }
 
         debug!(
             "{} comparing {}",
